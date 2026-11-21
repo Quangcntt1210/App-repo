@@ -1,4 +1,3 @@
-
 namespace APP
 {
     public class Program
@@ -7,24 +6,41 @@ namespace APP
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
+            builder.Logging.ClearProviders();
+            builder.Logging.AddConsole();
 
             builder.Services.AddControllers();
-            // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-            builder.Services.AddOpenApi();
+
+            var allowedOrigins = builder.Configuration
+                .GetSection("Cors:AllowedOrigins")
+                .Get<string[]>() ?? Array.Empty<string>();
+
+            if (allowedOrigins.Length == 0)
+            {
+                throw new InvalidOperationException(
+                    "Cors:AllowedOrigins has not been configured");
+            }
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("FrontendPolicy", policy =>
+                {
+                    policy.WithOrigins(allowedOrigins)
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+                });
+            });
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
+            if (!app.Environment.IsDevelopment())
             {
-                app.MapOpenApi();
+                app.UseHttpsRedirection();
             }
 
-            app.UseHttpsRedirection();
-
+            app.UseRouting();
+            app.UseCors("FrontendPolicy");
             app.UseAuthorization();
-
 
             app.MapControllers();
 

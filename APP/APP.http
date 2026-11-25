@@ -1,6 +1,28 @@
-@APP_HostAddress = http://localhost:5118
 
-GET {{APP_HostAddress}}/api/health
-Accept: application/json
+@baseUrl = http://localhost:5118
 
-###
+### Test 1: Đăng nhập đúng - 200
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "Admin123!"
+}
+
+### Test 2: Sai mật khẩu - 401
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "wrongpassword"
+}
+
+### Test 3: Thiếu username - 400
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "password": "Admin123!"
+}
